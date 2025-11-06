@@ -3,18 +3,15 @@
 <package format="3">
   <name>unitree_ros2_example</name>
   <version>0.0.0</version>
-  <description>Uniree ros2 example</description>
+  <description>Unitree Go2 Camera Bridge - ROS2 camera visualization example</description>
   <maintainer email="unitree@unitree.com">Unitree</maintainer>
   <license>BSD 3-Clause License</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <depend>unitree_go</depend>
-  <depend>unitree_hg</depend>
-  <depend>unitree_api</depend>
   <depend>rclcpp</depend>
-  <depend>std_msgs</depend>
-  <depend>rosbag2_cpp</depend>
+  <depend>sensor_msgs</depend>
+  <depend>cv_bridge</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
