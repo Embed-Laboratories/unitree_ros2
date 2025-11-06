@@ -103,12 +103,52 @@ private:
         // Publish image
         image_pub_->publish(*image_msg);
 
-        // Publish camera info
+        // Publish camera info with estimated calibration
+        // Typical parameters for 1280x720 camera
         auto camera_info_msg = std::make_shared<sensor_msgs::msg::CameraInfo>();
         camera_info_msg->header = header;
         camera_info_msg->height = frame.rows;
         camera_info_msg->width = frame.cols;
         camera_info_msg->distortion_model = "plumb_bob";
+
+        // Estimated camera intrinsics for 1280x720
+        // fx, fy = focal length (pixels) - typical ~900 for this resolution
+        // cx, cy = optical center (image width/2, height/2)
+        double fx = 900.0;
+        double fy = 900.0;
+        double cx = frame.cols / 2.0;  // 640.0
+        double cy = frame.rows / 2.0;  // 360.0
+
+        // K: Camera intrinsic matrix (3x3)
+        // [fx  0  cx]
+        // [ 0 fy  cy]
+        // [ 0  0   1]
+        camera_info_msg->k = {
+            fx,  0.0, cx,
+            0.0, fy,  cy,
+            0.0, 0.0, 1.0
+        };
+
+        // D: Distortion coefficients (k1, k2, t1, t2, k3)
+        // Assuming minimal distortion for now
+        camera_info_msg->d = {0.0, 0.0, 0.0, 0.0, 0.0};
+
+        // R: Rectification matrix (3x3) - identity for monocular camera
+        camera_info_msg->r = {
+            1.0, 0.0, 0.0,
+            0.0, 1.0, 0.0,
+            0.0, 0.0, 1.0
+        };
+
+        // P: Projection matrix (3x4)
+        // [fx  0  cx  0]
+        // [ 0 fy  cy  0]
+        // [ 0  0   1  0]
+        camera_info_msg->p = {
+            fx,  0.0, cx,  0.0,
+            0.0, fy,  cy,  0.0,
+            0.0, 0.0, 1.0, 0.0
+        };
 
         camera_info_pub_->publish(*camera_info_msg);
 

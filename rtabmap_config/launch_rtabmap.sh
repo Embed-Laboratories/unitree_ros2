@@ -23,9 +23,15 @@ echo "Starting odom→base_link TF broadcaster..."
 ODOM_TF_PID=$!
 sleep 1
 
+# Launch camera timestamp synchronizer in background
+echo "Starting camera timestamp synchronizer..."
+/usr/bin/python3 ~/unitree_ros2/rtabmap_config/launch/camera_sync.py &
+CAMERA_SYNC_PID=$!
+sleep 1
+
 # Launch RTABMap
-echo "Launching RTABMap SLAM..."
+echo "Launching RTABMap SLAM with camera..."
 ros2 launch ~/unitree_ros2/rtabmap_config/launch/rtabmap_go2.launch.py
 
 # Cleanup on exit
-trap "kill $STATIC_TF_PID $ODOM_TF_PID 2>/dev/null" EXIT
+trap "kill $STATIC_TF_PID $ODOM_TF_PID $CAMERA_SYNC_PID 2>/dev/null" EXIT

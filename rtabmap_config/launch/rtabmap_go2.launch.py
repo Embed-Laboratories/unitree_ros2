@@ -59,61 +59,74 @@ def generate_launch_description():
 
                 # Subscribe to these topics
                 'subscribe_depth': False,
-                'subscribe_rgb': False,  # Temporarily disabled for testing
+                'subscribe_rgb': True,   # ENABLED: Camera with timestamp sync
                 'subscribe_rgbd': False,
                 'subscribe_stereo': False,
                 'subscribe_scan': False,
                 'subscribe_scan_cloud': True,
                 'subscribe_user_data': False,
 
-                # Synchronization
-                'approx_sync': True,
-                'sync_queue_size': 100,
-                'topic_queue_size': 100,
+                # Synchronization - AGGRESSIVE SETTINGS
+                'approx_sync': True,           # Allow approximate timestamp matching
+                'approx_sync_max_interval': 0.5,  # AGGRESSIVE: 500ms max sync window
+                'sync_queue_size': 200,        # LARGE: buffer 200 messages
+                'topic_queue_size': 200,       # LARGE: queue size for topics
 
                 # Publish TF
                 'publish_tf': True,
 
-                # Ignore old data - only process recent scans
-                'wait_for_transform_duration': 0.2,
-                'tf_tolerance': 1.0,  # Allow 1 second tolerance for TF lookup
+                # Transform tolerance - VERY PERMISSIVE
+                'wait_for_transform_duration': 0.5,  # Wait up to 500ms for transforms
+                'tf_tolerance': 2.0,           # AGGRESSIVE: 2 second tolerance for TF lookup
 
-                # Memory management - AGGRESSIVE NODE CREATION
+                # Memory management - BALANCED for rotation stability
                 'Mem/IncrementalMemory': 'true',
                 'Mem/InitWMWithAllNodes': 'false',
-                'Mem/RehearsalSimilarity': '0.1',      # FORCE: Low threshold = more nodes
-                'Mem/BadSignaturesIgnored': 'false',   # FORCE: Don't reject any scans
-                'Mem/STMSize': '1',                    # FORCE: Move to LTM immediately
+                'Mem/RehearsalSimilarity': '0.3',      # Moderate threshold for node creation
+                'Mem/BadSignaturesIgnored': 'false',   # Don't reject scans
+                'Mem/STMSize': '30',                   # FIXED: Keep 30 nodes in working memory for rotation matching
 
                 # RTABMap core - FORCE HIGH FREQUENCY
                 'Rtabmap/CreateIntermediateNodes': 'true',   # Create nodes between closures
                 'Rtabmap/ImageBufferSize': '0',              # Process all data
                 'Rtabmap/DetectionRate': '10.0',             # High frequency processing
 
-                # SLAM mode - ULTRA SENSITIVE THRESHOLDS
+                # SLAM mode - BALANCED THRESHOLDS
                 'RGBD/NeighborLinkRefining': 'true',
                 'RGBD/ProximityBySpace': 'true',
                 'RGBD/ProximityPathMaxNeighbors': '10',
-                'RGBD/AngularUpdate': '0.001',   # FORCE: 0.057° = create on tiny rotation
-                'RGBD/LinearUpdate': '0.001',    # FORCE: 1mm = create on tiny movement
+                'RGBD/AngularUpdate': '0.05',    # 2.86° = reasonable rotation threshold
+                'RGBD/LinearUpdate': '0.10',     # 10cm = reasonable movement threshold
                 'RGBD/OptimizeFromGraphEnd': 'false',
                 'RGBD/MaxOdomCacheSize': '100',  # Large odometry cache
+                'RGBD/OptimizeMaxError': '5.0',  # Increased tolerance for loop closure errors
 
-                # ICP parameters - VERY LENIENT MATCHING
-                'Icp/MaxTranslation': '5',                   # FORCE: Accept large translations
+                # ICP parameters - STRICT for rotation stability
+                'Icp/MaxTranslation': '0.2',                 # Limit: 20cm max correction per frame
+                'Icp/MaxRotation': '0.78',                   # Limit: ~45° max rotation correction
                 'Icp/VoxelSize': '0.1',
-                'Icp/MaxCorrespondenceDistance': '2.0',      # FORCE: Lenient matching
-                'Icp/CorrespondenceRatio': '0.1',            # FORCE: Accept low correspondence
+                'Icp/MaxCorrespondenceDistance': '0.05',     # Strict: 5cm correspondence distance
+                'Icp/CorrespondenceRatio': '0.1',            # Accept low correspondence
                 'Icp/PointToPlaneK': '20',
                 'Icp/PointToPlaneRadius': '0',
                 'Icp/Iterations': '10',
                 'Icp/Epsilon': '0.001',
+                'Icp/PM': 'true',                            # Use libpointmatcher for robust ICP
+                'Icp/PMOutlierRatio': '0.85',                # libpointmatcher outlier filtering
 
-                # Visual features for loop closure
-                'Kp/MaxFeatures': '400',
-                'Kp/DetectorStrategy': '0',  # SURF
-                'Vis/MinInliers': '15',
-                'Vis/InlierDistance': '0.1',
+                # Visual features - AGGRESSIVE for rotation stability
+                'Kp/MaxFeatures': '1000',           # AGGRESSIVE: Extract many features
+                'Kp/DetectorStrategy': '6',         # GFTT/Brief - faster, works in low texture
+                'Kp/MaxDepth': '0',                 # No depth filtering (2D only)
+                'Kp/MinDepth': '0',
+                'Vis/MinInliers': '10',             # RELAXED: Accept fewer inliers
+                'Vis/InlierDistance': '0.15',       # RELAXED: Allow larger inlier distance
+                'Vis/MaxFeatures': '1000',          # Match many features
+                'Vis/CorType': '0',                 # Features Matching
+                'Vis/FeatureType': '6',             # GFTT/Brief
+                'Vis/EstimationType': '1',          # PnP (Essential for camera-only registration)
+                'Reg/Force3DoF': 'false',           # Allow full 6DOF for camera
+                'Reg/Strategy': '2',                # Visual+ICP: Use both visual and ICP for registration
 
                 # Grid map generation
                 'Grid/FromDepth': 'false',
@@ -124,8 +137,8 @@ def generate_launch_description():
             remappings=[
                 ('scan_cloud', '/utlidar/cloud_deskewed'),
                 ('odom', '/utlidar/robot_odom'),
-                ('rgb/image', '/camera/image_raw'),
-                ('rgb/camera_info', '/camera/camera_info'),
+                ('rgb/image', '/camera/image_synced'),        # SYNCED: Using timestamp-synchronized camera
+                ('rgb/camera_info', '/camera/camera_info_synced'),  # SYNCED: Using timestamp-synchronized camera_info
             ],
             arguments=[
                 '--delete_db_on_start',  # Start fresh each time
