@@ -78,22 +78,32 @@ def generate_launch_description():
                 'wait_for_transform_duration': 0.2,
                 'tf_tolerance': 1.0,  # Allow 1 second tolerance for TF lookup
 
-                # Memory management
+                # Memory management - AGGRESSIVE NODE CREATION
                 'Mem/IncrementalMemory': 'true',
                 'Mem/InitWMWithAllNodes': 'false',
+                'Mem/RehearsalSimilarity': '0.1',      # FORCE: Low threshold = more nodes
+                'Mem/BadSignaturesIgnored': 'false',   # FORCE: Don't reject any scans
+                'Mem/STMSize': '1',                    # FORCE: Move to LTM immediately
 
-                # SLAM mode
+                # RTABMap core - FORCE HIGH FREQUENCY
+                'Rtabmap/CreateIntermediateNodes': 'true',   # Create nodes between closures
+                'Rtabmap/ImageBufferSize': '0',              # Process all data
+                'Rtabmap/DetectionRate': '10.0',             # High frequency processing
+
+                # SLAM mode - ULTRA SENSITIVE THRESHOLDS
                 'RGBD/NeighborLinkRefining': 'true',
                 'RGBD/ProximityBySpace': 'true',
                 'RGBD/ProximityPathMaxNeighbors': '10',
-                'RGBD/AngularUpdate': '0.01',  # Create node on rotation (radians)
-                'RGBD/LinearUpdate': '0.01',   # Create node on translation (meters)
+                'RGBD/AngularUpdate': '0.001',   # FORCE: 0.057° = create on tiny rotation
+                'RGBD/LinearUpdate': '0.001',    # FORCE: 1mm = create on tiny movement
                 'RGBD/OptimizeFromGraphEnd': 'false',
+                'RGBD/MaxOdomCacheSize': '100',  # Large odometry cache
 
-                # ICP parameters for LiDAR
-                'Icp/MaxTranslation': '2',
+                # ICP parameters - VERY LENIENT MATCHING
+                'Icp/MaxTranslation': '5',                   # FORCE: Accept large translations
                 'Icp/VoxelSize': '0.1',
-                'Icp/MaxCorrespondenceDistance': '1',
+                'Icp/MaxCorrespondenceDistance': '2.0',      # FORCE: Lenient matching
+                'Icp/CorrespondenceRatio': '0.1',            # FORCE: Accept low correspondence
                 'Icp/PointToPlaneK': '20',
                 'Icp/PointToPlaneRadius': '0',
                 'Icp/Iterations': '10',
